@@ -13,6 +13,11 @@ def connect():
 
 
 def _commit(query):
+    '''Connext, commit query, and close
+
+    TODO:
+        Do we really neer to open and close each time?
+    '''
     c = connect()
     c.cursor().execute(query)
     c.commit()
