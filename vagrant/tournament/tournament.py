@@ -4,8 +4,10 @@
 #
 
 import psycopg2
+from itertools import izip_longest
 
 DBNAME = 'tournament'
+
 
 def connect():
     """Connect to the PostgreSQL database.  Returns a database connection."""
@@ -58,6 +60,16 @@ def registerPlayer(name):
     c.close()
 
 
+#  TODO: make into a view?
+STANDINGS_QUERY = '''
+SELECT players.id as id,
+       players.name as name,
+       (SELECT COUNT(*) FROM matches WHERE players.id = matches.winner_id) as wins,
+       (SELECT COUNT(*) FROM matches WHERE players.id = matches.player_a_id or players.id = matches.player_b_id) as matches
+FROM players ORDER BY wins DESC;
+'''
+
+
 def playerStandings():
     """Returns a list of the players and their win records, sorted by wins.
 
@@ -71,7 +83,12 @@ def playerStandings():
         wins: the number of matches the player has won
         matches: the number of matches the player has played
     """
-    pass
+    c = connect()
+    cur = c.cursor()
+    cur.execute(STANDINGS_QUERY)
+    res = cur.fetchall()
+    c.close()
+    return res
 
 
 def reportMatch(winner, loser):
@@ -81,7 +98,12 @@ def reportMatch(winner, loser):
       winner:  the id number of the player who won
       loser:  the id number of the player who lost
     """
-    pass
+    c = connect()
+    c.cursor().execute(
+        'INSERT INTO matches(player_a_id, player_b_id, winner_id) VALUES (%s, %s, %s)',
+        (winner, loser, winner))
+    c.commit()
+    c.close()
 
 
 def swissPairings():
@@ -99,4 +121,27 @@ def swissPairings():
         id2: the second player's unique id
         name2: the second player's name
     """
-    pass
+
+    # Standings lists players ordered by number of wins. We construct the
+    # swiss pairings from consecutive entries in the standings list. These have
+    # the closest number of wins by definition.
+    # We use a grouper function to iterate over the standings list in groups
+    # of two consecutive elements without overlap.
+    # TODO: extend for odd numbers
+
+    def grouper(iterable, n, fillvalue=None):
+        '''Collect data into fixed-length chunks or blocks
+
+        Taken from  itertools documentation:
+            https://docs.python.org/2/library/itertools.html
+
+        grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
+        '''
+        args = [iter(iterable)] * n
+        return izip_longest(fillvalue=fillvalue, *args)
+
+    standings = playerStandings()
+    pairings = [(a[0], a[1], b[0], b[1])
+                for a, b in grouper(standings, 2)]
+
+    return pairings
