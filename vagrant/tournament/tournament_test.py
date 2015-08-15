@@ -101,6 +101,7 @@ def testReportMatches():
     print "7. After a match, players have updated standings."
 
 
+
 def testPairings():
     deleteMatches()
     deletePlayers()
@@ -125,6 +126,41 @@ def testPairings():
     print "8. After one match, players with one win are paired."
 
 
+def testReportDuplicateMatchesRaisesValueError():
+    deleteMatches()
+    deletePlayers()
+    registerPlayer("Bruno Walton")
+    registerPlayer("Boots O'Neal")
+    registerPlayer("Cathy Burton")
+    registerPlayer("Diane Grant")
+    standings = playerStandings()
+    [id1, id2, id3, id4] = [row[0] for row in standings]
+    # this is already tested in testReportMatches()
+    reportMatch(id1, id2)
+    reportMatch(id3, id4)
+
+    def try_duplicate(a, b):
+        ''' Attempt to report duplicate matches
+
+        Returns:
+            True if duplicate raises ValueError, False otherwise
+        '''
+        try:
+            reportMatch(a, b)
+        except ValueError:
+            return True
+        return False
+
+    res = (try_duplicate(id1, id2)
+           and try_duplicate(id3, id4)
+           and try_duplicate(id2, id1)
+           and try_duplicate(id4, id1))
+
+    if not res:
+        raise ValueError("Registering duplicate match did not raise ValueError")
+    else:
+        print "9. Registering duplicate matches raises"
+
 if __name__ == '__main__':
     testDeleteMatches()
     testDelete()
@@ -134,4 +170,5 @@ if __name__ == '__main__':
     testStandingsBeforeMatches()
     testReportMatches()
     testPairings()
+    testReportDuplicateMatchesRaisesValueError()
     print "Success!  All tests pass!"
