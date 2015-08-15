@@ -154,7 +154,7 @@ def testReportDuplicateMatchesRaisesValueError():
     res = (try_duplicate(id1, id2)
            and try_duplicate(id3, id4)
            and try_duplicate(id2, id1)
-           and try_duplicate(id4, id1))
+           and try_duplicate(id4, id3))
 
     if not res:
         raise ValueError("Registering duplicate match did not raise ValueError")

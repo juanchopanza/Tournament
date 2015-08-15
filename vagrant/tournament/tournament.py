@@ -91,6 +91,8 @@ def playerStandings():
     return res
 
 
+
+
 def reportMatch(winner, loser):
     """Records the outcome of a single match between two players.
 
@@ -99,7 +101,20 @@ def reportMatch(winner, loser):
       loser:  the id number of the player who lost
     """
     c = connect()
-    c.cursor().execute(
+    cur = c.cursor()
+    def _checkPairing():
+        q = '''
+        SELECT COUNT(*) FROM matches
+        WHERE (matches.player_a_id = %s AND matches.player_b_id = %s)
+              OR (matches.player_a_id = %s AND matches.player_b_id = %s);
+        ''' % (winner, loser, loser, winner)
+        cur.execute(q)
+        if cur.fetchone()[0] > 0:
+            raise ValueError('Pairing %s, %s already played' % (winner, loser))
+
+    _checkPairing()
+
+    cur.execute(
         'INSERT INTO matches(player_a_id, player_b_id, winner_id) VALUES (%s, %s, %s)',
         (winner, loser, winner))
     c.commit()
