@@ -7,7 +7,7 @@ Project 2 in Udacity Fullstack Developer nanodegree
 This "application" is run and tested in a Lunix virtual machine managed by Vagrant.
 
 These are the main requirements of the application. If using Vagrant, these will be
-installed automaticlly. If running natively or on a manually installed virtual machine
+installed automatically. If running natively or on a manually installed virtual machine
 you will need to ensure these dependencies are met.
 
 * Python
