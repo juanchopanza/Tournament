@@ -10,6 +10,9 @@ CREATE DATABASE tournament;
 
 \c tournament;
 
+DROP TABLE IF EXISTS players CASCADE;
+DROP TABLE IF EXISTS matches CASCADE;
+
 CREATE TABLE players (id SERIAL PRIMARY KEY,
                       name VARCHAR(128) NOT NULL);
 
