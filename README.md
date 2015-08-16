@@ -49,6 +49,6 @@ Simply run the `tournament_test.py` script:
 
     ./tournament_test.py
 
-If this fails to run die to unsuitable permissions, invoke it with `python`:
+If this fails to run due to unsuitable permissions, invoke it with `python`:
 
     python tournament_test.py
