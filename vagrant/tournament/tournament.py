@@ -65,7 +65,7 @@ STANDINGS_QUERY = '''
 SELECT players.id as id,
        players.name as name,
        (SELECT COUNT(*) FROM matches WHERE players.id = matches.winner_id) as wins,
-       (SELECT COUNT(*) FROM matches WHERE players.id = matches.player_a_id or players.id = matches.player_b_id) as matches
+       (SELECT COUNT(*) FROM matches WHERE players.id = matches.winner_id or players.id = matches.loser_id) as matches
 FROM players ORDER BY wins DESC;
 '''
 
@@ -99,14 +99,21 @@ def reportMatch(winner, loser):
     Args:
       winner:  the id number of the player who won
       loser:  the id number of the player who lost
+
+    Raises:
+        ValueError is pairing already registered or winner == loser
     """
     c = connect()
     cur = c.cursor()
+
     def _checkPairing():
+        if winner == loser:
+            raise ValueError('Attempt to match player against self')
+
         q = '''
         SELECT COUNT(*) FROM matches
-        WHERE (matches.player_a_id = %s AND matches.player_b_id = %s)
-              OR (matches.player_a_id = %s AND matches.player_b_id = %s);
+        WHERE (matches.winner_id = %s AND matches.loser_id = %s)
+              OR (matches.winner_id = %s AND matches.loser_id = %s);
         ''' % (winner, loser, loser, winner)
         cur.execute(q)
         if cur.fetchone()[0] > 0:
@@ -115,8 +122,8 @@ def reportMatch(winner, loser):
     _checkPairing()
 
     cur.execute(
-        'INSERT INTO matches(player_a_id, player_b_id, winner_id) VALUES (%s, %s, %s)',
-        (winner, loser, winner))
+        'INSERT INTO matches(winner_id, loser_id) VALUES (%s, %s)',
+        (winner, loser))
     c.commit()
     c.close()
 

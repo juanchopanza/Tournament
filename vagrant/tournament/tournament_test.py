@@ -161,6 +161,43 @@ def testReportDuplicateMatchesRaisesValueError():
     else:
         print "9. Registering duplicate matches raises"
 
+
+def testReportSelfMatchesRaisesValueError():
+    deleteMatches()
+    deletePlayers()
+    registerPlayer("Bruno Walton")
+    registerPlayer("Boots O'Neal")
+    registerPlayer("Cathy Burton")
+    registerPlayer("Diane Grant")
+    standings = playerStandings()
+    [id1, id2, id3, id4] = [row[0] for row in standings]
+    # this is already tested in testReportMatches()
+    reportMatch(id1, id2)
+    reportMatch(id3, id4)
+
+    def try_duplicate(a, b):
+        ''' Attempt to report self matches
+
+        Returns:
+            True if a == b raises ValueError, False otherwise
+        '''
+        try:
+            reportMatch(a, b)
+        except ValueError:
+            return True
+        return False
+
+    res = (try_duplicate(id1, id1)
+           and try_duplicate(id2, id2)
+           and try_duplicate(id3, id3)
+           and try_duplicate(id4, id3))
+
+    if not res:
+        raise ValueError("Registering self-match did not raise ValueError")
+    else:
+        print "10. Registering match with self raises"
+
+
 if __name__ == '__main__':
     testDeleteMatches()
     testDelete()
@@ -171,4 +208,5 @@ if __name__ == '__main__':
     testReportMatches()
     testPairings()
     testReportDuplicateMatchesRaisesValueError()
+    testReportSelfMatchesRaisesValueError()
     print "Success!  All tests pass!"
