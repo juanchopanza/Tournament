@@ -1,7 +1,5 @@
 #!/usr/bin/env python
-#
-# tournament.py -- implementation of a Swiss-system tournament
-#
+'''tournament.py -- implementation of a Swiss-system tournament'''
 
 import psycopg2
 from itertools import izip_longest
@@ -14,21 +12,39 @@ def connect():
     return psycopg2.connect("dbname=%s" % DBNAME)
 
 
-def _commit(query):
-    '''Connext, commit query, and close
+def _commit(query, vals=()):
+    '''Connect, commit query, and close
 
     TODO:
         Do we really neer to open and close each time?
     '''
     c = connect()
-    c.cursor().execute(query)
+    c.cursor().execute(query, vals)
     c.commit()
     c.close()
+
+
+def _fetch(query, vals=()):
+    '''Connext, query, fetch all, close and return
+
+    Returns:
+        Result of the query
+
+    TODO:
+        Do we really neer to open and close each time?
+    '''
+    c = connect()
+    cur = c.cursor()
+    cur.execute(query, vals)
+    res = cur.fetchall()
+    c.close()
+    return res
 
 
 def deleteMatches():
     """Remove all the match records from the database."""
     _commit('DELETE FROM matches')
+
 
 def deletePlayers():
     """Remove all the player records from the database."""
@@ -37,12 +53,7 @@ def deletePlayers():
 
 def countPlayers():
     """Returns the number of players currently registered."""
-    c = connect()
-    cur = c.cursor()
-    cur.execute('SELECT COUNT(*) from players;')
-    res = cur.fetchone()[0]
-    c.close()
-    return res
+    return _fetch('SELECT COUNT(*) from players;')[0][0]
 
 
 def registerPlayer(name):
@@ -54,10 +65,7 @@ def registerPlayer(name):
     Args:
       name: the player's full name (need not be unique).
     """
-    c = connect()
-    c.cursor().execute('INSERT INTO players(name) VALUES (%s)', (name,))
-    c.commit()
-    c.close()
+    _commit('INSERT INTO players(name) VALUES (%s)', (name,))
 
 
 def playerStandings():
@@ -73,15 +81,7 @@ def playerStandings():
         wins: the number of matches the player has won
         matches: the number of matches the player has played
     """
-    c = connect()
-    cur = c.cursor()
-    #  Use the standings SQL view
-    cur.execute('SELECT * from standings')
-    res = cur.fetchall()
-    c.close()
-    return res
-
-
+    return _fetch('SELECT * from standings')
 
 
 def reportMatch(winner, loser):
@@ -94,8 +94,6 @@ def reportMatch(winner, loser):
     Raises:
         ValueError is pairing already registered or winner == loser
     """
-    c = connect()
-    cur = c.cursor()
 
     def _checkPairing():
         if winner == loser:
@@ -106,17 +104,14 @@ def reportMatch(winner, loser):
         WHERE (matches.winner_id = %s AND matches.loser_id = %s)
               OR (matches.winner_id = %s AND matches.loser_id = %s);
         '''
-        cur.execute(q, (winner, loser, loser, winner))
-        if cur.fetchone()[0] > 0:
+        res = _fetch(q, (winner, loser, loser, winner))
+        if res[0][0] > 0:
             raise ValueError('Pairing %s, %s already played' % (winner, loser))
 
     _checkPairing()
 
-    cur.execute(
-        'INSERT INTO matches(winner_id, loser_id) VALUES (%s, %s)',
-        (winner, loser))
-    c.commit()
-    c.close()
+    _commit('INSERT INTO matches(winner_id, loser_id) VALUES (%s, %s)',
+            (winner, loser))
 
 
 def swissPairings():
