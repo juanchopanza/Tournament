@@ -12,6 +12,7 @@ CREATE DATABASE tournament;
 
 DROP TABLE IF EXISTS players CASCADE;
 DROP TABLE IF EXISTS matches CASCADE;
+DROP VIEW IF EXISTS standings CASCADE;
 
 
 CREATE TABLE players (id SERIAL PRIMARY KEY,
@@ -21,3 +22,12 @@ CREATE TABLE players (id SERIAL PRIMARY KEY,
 CREATE TABLE matches (id SERIAL PRIMARY KEY,
                       winner_id INT REFERENCES players(id),
                       loser_id INT REFERENCES players(id));
+
+
+CREATE VIEW standings as
+SELECT players.id as id,
+       players.name as name,
+       (SELECT COUNT(*) FROM matches WHERE players.id = matches.winner_id) as wins,
+       (SELECT COUNT(*) FROM matches WHERE players.id = matches.winner_id or
+                                           players.id = matches.loser_id) as matches
+FROM players ORDER BY wins DESC;

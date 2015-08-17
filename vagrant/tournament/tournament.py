@@ -60,16 +60,6 @@ def registerPlayer(name):
     c.close()
 
 
-#  TODO: make into a view?
-STANDINGS_QUERY = '''
-SELECT players.id as id,
-       players.name as name,
-       (SELECT COUNT(*) FROM matches WHERE players.id = matches.winner_id) as wins,
-       (SELECT COUNT(*) FROM matches WHERE players.id = matches.winner_id or players.id = matches.loser_id) as matches
-FROM players ORDER BY wins DESC;
-'''
-
-
 def playerStandings():
     """Returns a list of the players and their win records, sorted by wins.
 
@@ -85,7 +75,8 @@ def playerStandings():
     """
     c = connect()
     cur = c.cursor()
-    cur.execute(STANDINGS_QUERY)
+    #  Use the standings SQL view
+    cur.execute('SELECT * from standings')
     res = cur.fetchall()
     c.close()
     return res
