@@ -88,8 +88,8 @@ def testReportMatches():
     registerPlayer("Diane Grant")
     standings = playerStandings()
     [id1, id2, id3, id4] = [row[0] for row in standings]
-    reportMatch(id1, id2)
-    reportMatch(id3, id4)
+    reportMatch(id1, id2, id1)
+    reportMatch(id3, id4, id3)
     standings = playerStandings()
     for (i, n, w, m) in standings:
         if m != 1:
@@ -111,8 +111,8 @@ def testPairings():
     registerPlayer("Pinkie Pie")
     standings = playerStandings()
     [id1, id2, id3, id4] = [row[0] for row in standings]
-    reportMatch(id1, id2)
-    reportMatch(id3, id4)
+    reportMatch(id1, id2, id1)
+    reportMatch(id3, id4, id3)
     pairings = swissPairings()
     if len(pairings) != 2:
         raise ValueError(
@@ -136,8 +136,8 @@ def testReportDuplicateMatchesRaisesValueError():
     standings = playerStandings()
     [id1, id2, id3, id4] = [row[0] for row in standings]
     # this is already tested in testReportMatches()
-    reportMatch(id1, id2)
-    reportMatch(id3, id4)
+    reportMatch(id1, id2, id1)
+    reportMatch(id3, id4, id3)
 
     def try_duplicate(a, b):
         ''' Attempt to report duplicate matches
@@ -146,7 +146,7 @@ def testReportDuplicateMatchesRaisesValueError():
             True if duplicate raises ValueError, False otherwise
         '''
         try:
-            reportMatch(a, b)
+            reportMatch(a, b, a)
         except ValueError:
             return True
         return False
@@ -172,30 +172,65 @@ def testReportSelfMatchesRaisesValueError():
     standings = playerStandings()
     [id1, id2, id3, id4] = [row[0] for row in standings]
     # this is already tested in testReportMatches()
-    reportMatch(id1, id2)
-    reportMatch(id3, id4)
+    reportMatch(id1, id2, id1)
+    reportMatch(id3, id4, id3)
 
-    def try_duplicate(a, b):
+    def try_self_match(a, b):
         ''' Attempt to report self matches
 
         Returns:
             True if a == b raises ValueError, False otherwise
         '''
         try:
-            reportMatch(a, b)
+            reportMatch(a, b, a)
         except ValueError:
             return True
         return False
 
-    res = (try_duplicate(id1, id1)
-           and try_duplicate(id2, id2)
-           and try_duplicate(id3, id3)
-           and try_duplicate(id4, id3))
+    res = (try_self_match(id1, id1)
+           and try_self_match(id2, id2)
+           and try_self_match(id3, id3)
+           and try_self_match(id4, id3))
 
     if not res:
         raise ValueError("Registering self-match did not raise ValueError")
     else:
         print "10. Registering match with self raises"
+
+def testReportMatchesBadWinnerRaisesValueError():
+    deleteMatches()
+    deletePlayers()
+    registerPlayer("Bruno Walton")
+    registerPlayer("Boots O'Neal")
+    registerPlayer("Cathy Burton")
+    registerPlayer("Diane Grant")
+    standings = playerStandings()
+    [id1, id2, id3, id4] = [row[0] for row in standings]
+    # this is already tested in testReportMatches()
+    reportMatch(id1, id2, id1)
+    reportMatch(id3, id4, id3)
+
+    def try_bad_winner_match(a, b, c):
+        ''' Attempt to report match with invalid winner
+
+        Returns:
+            True if c not in (a, b) raises ValueError, False otherwise
+        '''
+        try:
+            reportMatch(a, b, c)
+        except ValueError:
+            return True
+        return False
+
+    res = (try_bad_winner_match(id1, id2, id3)
+           and try_bad_winner_match(id2, id3, id4)
+           and try_bad_winner_match(id3, id4, id1)
+           and try_bad_winner_match(id4, id1, id2))
+
+    if not res:
+        raise ValueError("Registering bad winner match did not raise ValueError")
+    else:
+        print "11. Registering match with bad winner raises"
 
 
 if __name__ == '__main__':
@@ -209,4 +244,5 @@ if __name__ == '__main__':
     testPairings()
     testReportDuplicateMatchesRaisesValueError()
     testReportSelfMatchesRaisesValueError()
+    testReportMatchesBadWinnerRaisesValueError()
     print "Success!  All tests pass!"

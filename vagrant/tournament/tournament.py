@@ -84,34 +84,39 @@ def playerStandings():
     return _fetch('SELECT * from standings')
 
 
-def reportMatch(winner, loser):
+def reportMatch(player_a, player_b, winner):
     """Records the outcome of a single match between two players.
 
     Args:
-      winner:  the id number of the player who won
-      loser:  the id number of the player who lost
+      player_a:  the id number of the first player
+      player_b:  the id number of the second player
+      winner:    the id of the winner. None in case of draw.
 
     Raises:
-        ValueError is pairing already registered or winner == loser
+        ValueError if pairing already registered or winner == loser.
+        ValueError if winner is not player_a or player_b.
+        ValueError if players already played.
     """
 
     def _checkPairing():
-        if winner == loser:
+        if player_a == player_b:
             raise ValueError('Attempt to match player against self')
+        if winner not in (player_a, player_b):
+            raise ValueError('Winner is not one of the players')
 
         q = '''
         SELECT COUNT(*) FROM matches
-        WHERE (matches.winner_id = %s AND matches.loser_id = %s)
-              OR (matches.winner_id = %s AND matches.loser_id = %s);
+        WHERE (matches.player_a_id = %s AND matches.player_b_id = %s)
+              OR (matches.player_a_id = %s AND matches.player_b_id = %s);
         '''
-        res = _fetch(q, (winner, loser, loser, winner))
+        res = _fetch(q, (player_a, player_b, player_b, player_a))
         if res[0][0] > 0:
-            raise ValueError('Pairing %s, %s already played' % (winner, loser))
+            raise ValueError('Pairing %s, %s already played' % (player_a, player_b))
 
     _checkPairing()
 
-    _commit('INSERT INTO matches(winner_id, loser_id) VALUES (%s, %s)',
-            (winner, loser))
+    _commit('INSERT INTO matches(player_a_id, player_b_id, winner_id) VALUES (%s, %s, %s)',
+            (player_a, player_b, winner))
 
 
 def swissPairings():

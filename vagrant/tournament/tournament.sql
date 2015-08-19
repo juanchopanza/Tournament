@@ -14,15 +14,18 @@ CREATE TABLE players (id SERIAL PRIMARY KEY,
                       name VARCHAR(128) NOT NULL);
 
 
+-- redundant IDs needed to support draws.
+-- winner_id is NULL if the match is a draw.
 CREATE TABLE matches (id SERIAL PRIMARY KEY,
-                      winner_id INT REFERENCES players(id),
-                      loser_id INT REFERENCES players(id));
+                      player_a_id INT REFERENCES players(id) NOT NULL,
+                      player_b_id INT REFERENCES players(id) NOT NULL,
+                      winner_id INT REFERENCES players(id));
 
 
 CREATE VIEW standings as
 SELECT players.id as id,
        players.name as name,
-       (SELECT COUNT(*) FROM matches WHERE players.id = matches.winner_id) as wins,
-       (SELECT COUNT(*) FROM matches WHERE players.id = matches.winner_id or
-                                           players.id = matches.loser_id) as matches
+       (SELECT COUNT(*) FROM matches WHERE players.id = matches.player_a_id) as wins,
+       (SELECT COUNT(*) FROM matches WHERE players.id = matches.player_a_id or
+                                           players.id = matches.player_b_id) as matches
 FROM players ORDER BY wins DESC;
