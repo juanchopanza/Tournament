@@ -1,18 +1,13 @@
 -- Table definitions for the tournament project.
 --
--- Put your SQL 'create table' statements in this file; also 'create view'
--- statements if you choose to use it.
---
--- You can write comments in this file by starting them with two dashes, like
--- these lines here.
+-- WARNING: This script re-creates the database from scratch each time.
+--          Previously stored data will be lost!
+
+DROP DATABASE IF EXISTS tournament;
 
 CREATE DATABASE tournament;
 
 \c tournament;
-
-DROP TABLE IF EXISTS players CASCADE;
-DROP TABLE IF EXISTS matches CASCADE;
-DROP VIEW IF EXISTS standings CASCADE;
 
 
 CREATE TABLE players (id SERIAL PRIMARY KEY,
