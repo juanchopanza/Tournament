@@ -2,12 +2,18 @@
 
 Project 2 in Udacity Fullstack Developer nanodegree
 
+Python module to manage a 
+[Swiss system tournament](https://en.wikipedia.org/wiki/Swiss-system_tournament).
+
+Supports registration of players and multiple independent tournaments. Players can 
+play in any number of tournaments.
+
 ## Exciting extra features:
 
 * No re-matches allowed.
 * Games with no winner allowed: players with same number of wins are ranked by
   number of draws.
-
+* Multiple tournaments supported.
 
 ## Requirements:
 

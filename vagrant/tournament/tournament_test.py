@@ -4,19 +4,23 @@
 
 from tournament import *
 
-def testDeleteMatches():
-    deleteMatches()
+def testDeleteMatches(tournament):
+    deleteMatches(tournament)
     print "1. Old matches can be deleted."
 
+def testDeleteTournaments():
+    deleteTournaments()
+    print "0. Old tournaments can be deleted."
 
-def testDelete():
-    deleteMatches()
+
+def testDelete(tournament):
+    deleteMatches(tournament)
     deletePlayers()
     print "2. Player records can be deleted."
 
 
-def testCount():
-    deleteMatches()
+def testCount(tournament):
+    deleteMatches(tournament)
     deletePlayers()
     c = countPlayers()
     if c == '0':
@@ -27,8 +31,8 @@ def testCount():
     print "3. After deleting, countPlayers() returns zero."
 
 
-def testRegister():
-    deleteMatches()
+def testRegister(tournament):
+    deleteMatches(tournament)
     deletePlayers()
     registerPlayer("Chandra Nalaar")
     c = countPlayers()
@@ -38,8 +42,8 @@ def testRegister():
     print "4. After registering a player, countPlayers() returns 1."
 
 
-def testRegisterCountDelete():
-    deleteMatches()
+def testRegisterCountDelete(tournament):
+    deleteMatches(tournament)
     deletePlayers()
     registerPlayer("Markov Chaney")
     registerPlayer("Joe Malik")
@@ -56,12 +60,12 @@ def testRegisterCountDelete():
     print "5. Players can be registered and deleted."
 
 
-def testStandingsBeforeMatches():
-    deleteMatches()
+def testStandingsBeforeMatches(tournament):
+    deleteMatches(tournament)
     deletePlayers()
     registerPlayer("Melpomene Murray")
     registerPlayer("Randy Schwartz")
-    standings = playerStandings()
+    standings = playerStandings(tournament)
     if len(standings) < 2:
         raise ValueError("Players should appear in playerStandings even before "
                          "they have played any matches.")
@@ -80,18 +84,18 @@ def testStandingsBeforeMatches():
     print "6. Newly registered players appear in the standings with no matches."
 
 
-def testReportMatches():
-    deleteMatches()
+def testReportMatches(tournament):
+    deleteMatches(tournament)
     deletePlayers()
     registerPlayer("Bruno Walton")
     registerPlayer("Boots O'Neal")
     registerPlayer("Cathy Burton")
     registerPlayer("Diane Grant")
-    standings = playerStandings()
+    standings = playerStandings(tournament)
     [id1, id2, id3, id4] = [row[0] for row in standings]
-    reportMatch(id1, id2, id1)
-    reportMatch(id3, id4, id3)
-    standings = playerStandings()
+    reportMatch(id1, id2, id1, tournament)
+    reportMatch(id3, id4, id3, tournament)
+    standings = playerStandings(tournament)
     for (i, n, w, d, m) in standings:
         if m != 1:
             raise ValueError("Each player should have one match recorded.")
@@ -104,8 +108,8 @@ def testReportMatches():
     print "7. After a match, players have updated standings."
 
 
-def testReportMatchesWithDraws():
-    deleteMatches()
+def testReportMatchesWithDraws(tournament):
+    deleteMatches(tournament)
     deletePlayers()
     registerPlayer("Bruno Walton")
     registerPlayer("Boots O'Neal")
@@ -113,15 +117,15 @@ def testReportMatchesWithDraws():
     registerPlayer("Diane Grant")
     registerPlayer("Lucy Himmel")
     registerPlayer("Reto Schweitzer")
-    standings = playerStandings()
+    standings = playerStandings(tournament)
     [id1, id2, id3, id4, id5, id6] = [row[0] for row in standings]
-    reportMatch(id1, id2, id1)
-    reportMatch(id3, id4, id3)
-    reportMatch(id5, id6)  # No winner: this is a draw
-    reportMatch(id3, id6)  # No winner: this is a draw
-    reportMatch(id2, id3)  # No winner: this is a draw
-    reportMatch(id2, id6, id2)
-    standings = playerStandings()
+    reportMatch(id1, id2, id1, tournament)
+    reportMatch(id3, id4, id3, tournament)
+    reportMatch(id5, id6, tournament=tournament)  # No winner: this is a draw
+    reportMatch(id3, id6, tournament=tournament)  # No winner: this is a draw
+    reportMatch(id2, id3, tournament=tournament)  # No winner: this is a draw
+    reportMatch(id2, id6, id2, tournament)
+    standings = playerStandings(tournament)
     # standings are sorted by wins, then draws
     # matches have been reported such that playerStandings()
     # should guarantee this ordering (no players have equal number of
@@ -141,18 +145,18 @@ def testReportMatchesWithDraws():
     print "12. After a match, players have updated standings."
 
 
-def testPairings():
-    deleteMatches()
+def testPairings(tournament):
+    deleteMatches(tournament)
     deletePlayers()
     registerPlayer("Twilight Sparkle")
     registerPlayer("Fluttershy")
     registerPlayer("Applejack")
     registerPlayer("Pinkie Pie")
-    standings = playerStandings()
+    standings = playerStandings(tournament)
     [id1, id2, id3, id4] = [row[0] for row in standings]
-    reportMatch(id1, id2, id1)
-    reportMatch(id3, id4, id3)
-    pairings = swissPairings()
+    reportMatch(id1, id2, id1, tournament)
+    reportMatch(id3, id4, id3, tournament)
+    pairings = swissPairings(tournament)
     if len(pairings) != 2:
         raise ValueError(
             "For four players, swissPairings should return two pairs.")
@@ -165,18 +169,18 @@ def testPairings():
     print "8. After one match, players with one win are paired."
 
 
-def testReportDuplicateMatchesRaisesValueError():
-    deleteMatches()
+def testReportDuplicateMatchesRaisesValueError(tournament):
+    deleteMatches(tournament)
     deletePlayers()
     registerPlayer("Bruno Walton")
     registerPlayer("Boots O'Neal")
     registerPlayer("Cathy Burton")
     registerPlayer("Diane Grant")
-    standings = playerStandings()
+    standings = playerStandings(tournament)
     [id1, id2, id3, id4] = [row[0] for row in standings]
     # this is already tested in testReportMatches()
-    reportMatch(id1, id2, id1)
-    reportMatch(id3, id4, id3)
+    reportMatch(id1, id2, id1, tournament)
+    reportMatch(id3, id4, id3, tournament)
 
     def try_duplicate(a, b):
         ''' Attempt to report duplicate matches
@@ -185,7 +189,7 @@ def testReportDuplicateMatchesRaisesValueError():
             True if duplicate raises ValueError, False otherwise
         '''
         try:
-            reportMatch(a, b, a)
+            reportMatch(a, b, a, tournament)
         except ValueError:
             return True
         return False
@@ -201,18 +205,18 @@ def testReportDuplicateMatchesRaisesValueError():
         print "9. Registering duplicate matches raises"
 
 
-def testReportSelfMatchesRaisesValueError():
-    deleteMatches()
+def testReportSelfMatchesRaisesValueError(tournament):
+    deleteMatches(tournament)
     deletePlayers()
     registerPlayer("Bruno Walton")
     registerPlayer("Boots O'Neal")
     registerPlayer("Cathy Burton")
     registerPlayer("Diane Grant")
-    standings = playerStandings()
+    standings = playerStandings(tournament)
     [id1, id2, id3, id4] = [row[0] for row in standings]
     # this is already tested in testReportMatches()
-    reportMatch(id1, id2, id1)
-    reportMatch(id3, id4, id3)
+    reportMatch(id1, id2, id1, tournament)
+    reportMatch(id3, id4, id3, tournament)
 
     def try_self_match(a, b):
         ''' Attempt to report self matches
@@ -236,18 +240,18 @@ def testReportSelfMatchesRaisesValueError():
     else:
         print "10. Registering match with self raises"
 
-def testReportMatchesBadWinnerRaisesValueError():
-    deleteMatches()
+def testReportMatchesBadWinnerRaisesValueError(tournament):
+    deleteMatches(tournament)
     deletePlayers()
     registerPlayer("Bruno Walton")
     registerPlayer("Boots O'Neal")
     registerPlayer("Cathy Burton")
     registerPlayer("Diane Grant")
-    standings = playerStandings()
+    standings = playerStandings(tournament)
     [id1, id2, id3, id4] = [row[0] for row in standings]
     # this is already tested in testReportMatches()
-    reportMatch(id1, id2, id1)
-    reportMatch(id3, id4, id3)
+    reportMatch(id1, id2, id1, tournament)
+    reportMatch(id3, id4, id3, tournament)
 
     def try_bad_winner_match(a, b, c):
         ''' Attempt to report match with invalid winner
@@ -273,16 +277,23 @@ def testReportMatchesBadWinnerRaisesValueError():
 
 
 if __name__ == '__main__':
-    testDeleteMatches()
-    testDelete()
-    testCount()
-    testRegister()
-    testRegisterCountDelete()
-    testStandingsBeforeMatches()
-    testReportMatches()
-    testPairings()
-    testReportDuplicateMatchesRaisesValueError()
-    testReportSelfMatchesRaisesValueError()
-    testReportMatchesBadWinnerRaisesValueError()
-    testReportMatchesWithDraws()
-    print "Success!  All tests pass!"
+
+    deleteTournaments()
+
+    for i in xrange(5):
+        tournament_name = 'test_tournament%d' % i
+        tid = registerTournament(tournament_name)
+        print 'tournament name', tournament_name, 'id', tid
+        testDeleteMatches(tid)
+        testDelete(tid)
+        testCount(tid)
+        testRegister(tid)
+        testRegisterCountDelete(tid)
+        testStandingsBeforeMatches(tid)
+        testReportMatches(tid)
+        testPairings(tid)
+        testReportDuplicateMatchesRaisesValueError(tid)
+        testReportSelfMatchesRaisesValueError(tid)
+        testReportMatchesBadWinnerRaisesValueError(tid)
+        testReportMatchesWithDraws(tid)
+        print "Success!  All tests pass!"

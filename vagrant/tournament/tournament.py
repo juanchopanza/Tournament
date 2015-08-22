@@ -46,9 +46,23 @@ def _delete(query, vals=()):
     _query(query, vals, commit=True)
 
 
-def deleteMatches():
-    """Remove all the match records from the database."""
-    _delete('DELETE FROM matches')
+def deleteTournaments():
+    '''Remove all the tournaments from the database.'''
+    _delete('DELETE FROM tournaments')
+
+
+def deleteMatches(tournament=None):
+    """Remove match records from the database.
+
+    Args:
+        tournament: id of tournament whose matches must be deleted. If
+                    None, all matches are deleted.
+    """
+    if tournament is not None:
+        _delete('DELETE FROM matches WHERE tournament_id = %s',
+                (tournament,))
+    else:
+        _delete('DELETE FROM matches')
 
 
 def deletePlayers():
@@ -59,6 +73,18 @@ def deletePlayers():
 def countPlayers():
     """Returns the number of players currently registered."""
     return _select('SELECT COUNT(*) from players;')[0][0]
+
+
+def registerTournament(name):
+    """Adds a tournament to the tournament database.
+
+    Args:
+      name: the tournament's name (need not be unique).
+
+    Returns:
+        id of the registered tournament
+    """
+    return _insert('INSERT INTO tournaments(name) VALUES (%s) RETURNING id', (name,))
 
 
 def registerPlayer(name):
@@ -73,11 +99,14 @@ def registerPlayer(name):
     return _insert('INSERT INTO players(name) VALUES (%s) RETURNING id', (name,))
 
 
-def playerStandings():
+def playerStandings(tournament):
     """Returns a list of the players and their win records, sorted by wins.
 
     The first entry in the list should be the player in first place, or a player
     tied for first place if there is currently a tie.
+
+    Args:
+        tournament: id of the torunament whose standings are to be calculated
 
     Returns:
       A list of tuples, each of which contains (id, name, wins, matches):
@@ -86,16 +115,32 @@ def playerStandings():
         wins: the number of matches the player has won
         matches: the number of matches the player has played
     """
-    return _select('SELECT * from standings')
+
+    # This is  not a view because I need to parametrize by tournament ID at
+    # runtime.
+    standings_query = '''
+    SELECT players.id as id,
+       players.name as name,
+       (SELECT COUNT(*) FROM matches WHERE players.id = matches.winner_id) as wins,
+       (SELECT COUNT(*) FROM matches WHERE (players.id = matches.player_a_id or
+                                            players.id = matches.player_b_id) and
+                                            matches.winner_id IS NULL) as draws,
+       (SELECT COUNT(*) FROM matches WHERE players.id = matches.player_a_id or
+                                           players.id = matches.player_b_id) as matches
+    FROM players, tournaments where tournaments.id = %s
+    ORDER BY wins DESC, draws DESC;
+    '''
+    return _select(standings_query, (tournament,))
 
 
-def reportMatch(player_a, player_b, winner=None):
+def reportMatch(player_a, player_b, winner=None, tournament=None):
     """Records the outcome of a single match between two players.
 
     Args:
       player_a:  the id number of the first player
       player_b:  the id number of the second player
       winner: the id of the winner. None in case of draw.
+      tournament: id of the torunament match is being played in.
 
     Raises:
         ValueError if pairing already registered or player_a == player_b.
@@ -110,27 +155,31 @@ def reportMatch(player_a, player_b, winner=None):
             raise ValueError('Winner is not one of the players')
 
         q = '''
-        SELECT COUNT(*) FROM matches
-        WHERE (matches.player_a_id = %s AND matches.player_b_id = %s)
+        SELECT COUNT(*) FROM matches, tournaments
+        WHERE tournaments.id = %s
+              AND (matches.player_a_id = %s AND matches.player_b_id = %s)
               OR (matches.player_a_id = %s AND matches.player_b_id = %s);
         '''
-        res = _select(q, (player_a, player_b, player_b, player_a))
+        res = _select(q, (tournament, player_a, player_b, player_b, player_a))
         if res[0][0] > 0:
             raise ValueError('Pairing %s, %s already played' % (player_a, player_b))
 
     _checkPairing()
 
-    return _insert('INSERT INTO matches(player_a_id, player_b_id, winner_id) VALUES (%s, %s, %s) RETURNING id',
-                   (player_a, player_b, winner))
+    return _insert('INSERT INTO matches(tournament_id, player_a_id, player_b_id, winner_id) VALUES (%s, %s, %s, %s) RETURNING id',
+                   (tournament, player_a, player_b, winner))
 
 
-def swissPairings():
+def swissPairings(tournament):
     """Returns a list of pairs of players for the next round of a match.
 
     Assuming that there are an even number of players registered, each player
     appears exactly once in the pairings.  Each player is paired with another
     player with an equal or nearly-equal win record, that is, a player adjacent
     to him or her in the standings.
+
+    Args:
+        tournament: id of the tournament pairings are requested for.
 
     Returns:
       A list of tuples, each of which contains (id1, name1, id2, name2)
@@ -158,7 +207,7 @@ def swissPairings():
         args = [iter(iterable)] * n
         return izip_longest(fillvalue=fillvalue, *args)
 
-    standings = playerStandings()
+    standings = playerStandings(tournament)
     pairings = [(a[0], a[1], b[0], b[1])
                 for a, b in grouper(standings, 2)]
 
