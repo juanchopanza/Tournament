@@ -67,10 +67,11 @@ def testStandingsBeforeMatches():
                          "they have played any matches.")
     elif len(standings) > 2:
         raise ValueError("Only registered players should appear in standings.")
-    if len(standings[0]) != 4:
+    if len(standings[0]) != 5:
         raise ValueError("Each playerStandings row should have four columns.")
-    [(id1, name1, wins1, matches1), (id2, name2, wins2, matches2)] = standings
-    if matches1 != 0 or matches2 != 0 or wins1 != 0 or wins2 != 0:
+    [(id1, name1, wins1, draws1, matches1),
+     (id2, name2, wins2, draws2, matches2)] = standings
+    if [wins1, draws1, matches1, wins2, draws2, matches2] != [0]*6:
         raise ValueError(
             "Newly registered players should have no matches or wins.")
     if set([name1, name2]) != set(["Melpomene Murray", "Randy Schwartz"]):
@@ -91,15 +92,53 @@ def testReportMatches():
     reportMatch(id1, id2, id1)
     reportMatch(id3, id4, id3)
     standings = playerStandings()
-    for (i, n, w, m) in standings:
+    for (i, n, w, d, m) in standings:
         if m != 1:
             raise ValueError("Each player should have one match recorded.")
+        if d != 0:
+            raise ValueError("Each player should have no draws recorded.")
         if i in (id1, id3) and w != 1:
             raise ValueError("Each match winner should have one win recorded.")
         elif i in (id2, id4) and w != 0:
             raise ValueError("Each match loser should have zero wins recorded.")
     print "7. After a match, players have updated standings."
 
+
+def testReportMatchesWithDraws():
+    deleteMatches()
+    deletePlayers()
+    registerPlayer("Bruno Walton")
+    registerPlayer("Boots O'Neal")
+    registerPlayer("Cathy Burton")
+    registerPlayer("Diane Grant")
+    registerPlayer("Lucy Himmel")
+    registerPlayer("Reto Schweitzer")
+    standings = playerStandings()
+    [id1, id2, id3, id4, id5, id6] = [row[0] for row in standings]
+    reportMatch(id1, id2, id1)
+    reportMatch(id3, id4, id3)
+    reportMatch(id5, id6)  # No winner: this is a draw
+    reportMatch(id3, id6)  # No winner: this is a draw
+    reportMatch(id2, id3)  # No winner: this is a draw
+    reportMatch(id2, id6, id2)
+    standings = playerStandings()
+    # standings are sorted by wins, then draws
+    # matches have been reported such that playerStandings()
+    # should guarantee this ordering (no players have equal number of
+    # both wins and draws)
+    ref_standings = [
+        ('Cathy Burton', 1L, 2L, 3L),
+        ("Boots O'Neal", 1L, 1L, 3L),
+        ('Bruno Walton', 1L, 0L, 1L),
+        ('Reto Schweitzer', 0L, 2L, 3L),
+        ('Lucy Himmel', 0L, 1L, 1L),
+        ('Diane Grant', 0L, 0L, 1L)
+    ]
+
+    for i, st in enumerate(standings):
+        if st[1:] != ref_standings[i]:
+            raise ValueError("Matches with draws not correctly ordered in standings")
+    print "12. After a match, players have updated standings."
 
 
 def testPairings():
@@ -245,4 +284,5 @@ if __name__ == '__main__':
     testReportDuplicateMatchesRaisesValueError()
     testReportSelfMatchesRaisesValueError()
     testReportMatchesBadWinnerRaisesValueError()
+    testReportMatchesWithDraws()
     print "Success!  All tests pass!"

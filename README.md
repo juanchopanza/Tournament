@@ -1,6 +1,13 @@
-# Tournament
+# Swiss Tournament
 
 Project 2 in Udacity Fullstack Developer nanodegree
+
+## Exciting extra features:
+
+* No re-matches allowed.
+* Games with no winner allowed: players with same number of wins are ranked by
+  number of draws.
+
 
 ## Requirements:
 

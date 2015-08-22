@@ -25,7 +25,10 @@ CREATE TABLE matches (id SERIAL PRIMARY KEY,
 CREATE VIEW standings as
 SELECT players.id as id,
        players.name as name,
-       (SELECT COUNT(*) FROM matches WHERE players.id = matches.player_a_id) as wins,
+       (SELECT COUNT(*) FROM matches WHERE players.id = matches.winner_id) as wins,
+       (SELECT COUNT(*) FROM matches WHERE (players.id = matches.player_a_id or
+                                            players.id = matches.player_b_id) and
+                                            matches.winner_id IS NULL) as draws,
        (SELECT COUNT(*) FROM matches WHERE players.id = matches.player_a_id or
                                            players.id = matches.player_b_id) as matches
-FROM players ORDER BY wins DESC;
+FROM players ORDER BY wins DESC, draws DESC;

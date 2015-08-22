@@ -84,16 +84,16 @@ def playerStandings():
     return _fetch('SELECT * from standings')
 
 
-def reportMatch(player_a, player_b, winner):
+def reportMatch(player_a, player_b, winner=None):
     """Records the outcome of a single match between two players.
 
     Args:
       player_a:  the id number of the first player
       player_b:  the id number of the second player
-      winner:    the id of the winner. None in case of draw.
+      winner: the id of the winner. None in case of draw.
 
     Raises:
-        ValueError if pairing already registered or winner == loser.
+        ValueError if pairing already registered or player_a == player_b.
         ValueError if winner is not player_a or player_b.
         ValueError if players already played.
     """
@@ -101,7 +101,7 @@ def reportMatch(player_a, player_b, winner):
     def _checkPairing():
         if player_a == player_b:
             raise ValueError('Attempt to match player against self')
-        if winner not in (player_a, player_b):
+        if winner is not None and winner not in (player_a, player_b):
             raise ValueError('Winner is not one of the players')
 
         q = '''
