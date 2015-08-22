@@ -12,20 +12,8 @@ def connect():
     return psycopg2.connect("dbname=%s" % DBNAME)
 
 
-def _commit(query, vals=()):
-    '''Connect, commit query, and close
-
-    TODO:
-        Do we really neer to open and close each time?
-    '''
-    c = connect()
-    c.cursor().execute(query, vals)
-    c.commit()
-    c.close()
-
-
-def _fetch(query, vals=()):
-    '''Connext, query, fetch all, close and return
+def _query(query, vals=(), commit=False, post_exec=None):
+    '''Generic configurable query
 
     Returns:
         Result of the query
@@ -36,24 +24,41 @@ def _fetch(query, vals=()):
     c = connect()
     cur = c.cursor()
     cur.execute(query, vals)
-    res = cur.fetchall()
+    if commit:
+        c.commit()
+    res = None if post_exec is None else post_exec(cur)
     c.close()
     return res
 
 
+def _insert(query, vals=()):
+    '''Insert a row and return its ID'''
+    return _query(query, vals, commit=True, post_exec=lambda c: c.fetchone()[0])
+
+
+def _select(query, vals=()):
+    '''Select a row and return it'''
+    return _query(query, vals, post_exec=lambda c: c.fetchall())
+
+
+def _delete(query, vals=()):
+    '''Delete a row'''
+    _query(query, vals, commit=True)
+
+
 def deleteMatches():
     """Remove all the match records from the database."""
-    _commit('DELETE FROM matches')
+    _delete('DELETE FROM matches')
 
 
 def deletePlayers():
     """Remove all the player records from the database."""
-    _commit('DELETE FROM players')
+    _delete('DELETE FROM players')
 
 
 def countPlayers():
     """Returns the number of players currently registered."""
-    return _fetch('SELECT COUNT(*) from players;')[0][0]
+    return _select('SELECT COUNT(*) from players;')[0][0]
 
 
 def registerPlayer(name):
@@ -65,7 +70,7 @@ def registerPlayer(name):
     Args:
       name: the player's full name (need not be unique).
     """
-    _commit('INSERT INTO players(name) VALUES (%s)', (name,))
+    return _insert('INSERT INTO players(name) VALUES (%s) RETURNING id', (name,))
 
 
 def playerStandings():
@@ -81,7 +86,7 @@ def playerStandings():
         wins: the number of matches the player has won
         matches: the number of matches the player has played
     """
-    return _fetch('SELECT * from standings')
+    return _select('SELECT * from standings')
 
 
 def reportMatch(player_a, player_b, winner=None):
@@ -109,14 +114,14 @@ def reportMatch(player_a, player_b, winner=None):
         WHERE (matches.player_a_id = %s AND matches.player_b_id = %s)
               OR (matches.player_a_id = %s AND matches.player_b_id = %s);
         '''
-        res = _fetch(q, (player_a, player_b, player_b, player_a))
+        res = _select(q, (player_a, player_b, player_b, player_a))
         if res[0][0] > 0:
             raise ValueError('Pairing %s, %s already played' % (player_a, player_b))
 
     _checkPairing()
 
-    _commit('INSERT INTO matches(player_a_id, player_b_id, winner_id) VALUES (%s, %s, %s)',
-            (player_a, player_b, winner))
+    return _insert('INSERT INTO matches(player_a_id, player_b_id, winner_id) VALUES (%s, %s, %s) RETURNING id',
+                   (player_a, player_b, winner))
 
 
 def swissPairings():
