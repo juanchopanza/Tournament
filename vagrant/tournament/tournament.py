@@ -106,16 +106,26 @@ def registerTournament(name):
     return _insert('INSERT INTO tournaments(name) VALUES (%s) RETURNING id', (name,))
 
 
-def registerPlayer(name):
+def registerPlayer(name, tournaments=()):
     """Adds a player to the global tournament database.
 
     Args:
       name: the player's full name (need not be unique).
+      tournament(optional): Iterable with IDs if tournaments to which this player
+      should be registered.
+
+      Note:
+          Players can be registered to tournaments separately
+          using the registerPlayerToTournament method.
 
     Returns:
         ID of registered player
     """
-    return _insert('INSERT INTO players(name) VALUES (%s) RETURNING id', (name,))
+    player_id = _insert('INSERT INTO players(name) VALUES (%s) RETURNING id', (name,))
+    for tournament_id in tournaments:
+        registerPlayerToTournament(player_id, tournament_id)
+
+    return player_id
 
 
 def tournamentPlayers(tournament):

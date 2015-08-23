@@ -88,12 +88,14 @@ def testStandingsBeforeMatches(tournament):
 def testReportMatches(tournament):
     deleteMatches(tournament)
     deletePlayers()
-    registerPlayer("Bruno Walton")
-    registerPlayer("Boots O'Neal")
-    registerPlayer("Cathy Burton")
-    registerPlayer("Diane Grant")
-    standings = playerStandings(tournament)
-    [id1, id2, id3, id4] = [row[0] for row in standings]
+    deleteTournamentPlayers()
+
+    id1, id2, id3, id4 = (registerPlayer("Bruno Walton", (tournament,)),
+                          registerPlayer("Boots O'Neal", (tournament,)),
+                          registerPlayer("Cathy Burton", (tournament,)),
+                          registerPlayer("Diane Grant", (tournament,)))
+    #standings = playerStandings(tournament)
+    #[id1, id2, id3, id4] = [row[0] for row in standings]
     reportMatch(id1, id2, id1, tournament)
     reportMatch(id3, id4, id3, tournament)
     standings = playerStandings(tournament)
@@ -112,14 +114,17 @@ def testReportMatches(tournament):
 def testReportMatchesWithDraws(tournament):
     deleteMatches(tournament)
     deletePlayers()
-    registerPlayer("Bruno Walton")
-    registerPlayer("Boots O'Neal")
-    registerPlayer("Cathy Burton")
-    registerPlayer("Diane Grant")
-    registerPlayer("Lucy Himmel")
-    registerPlayer("Reto Schweitzer")
-    standings = playerStandings(tournament)
-    [id1, id2, id3, id4, id5, id6] = [row[0] for row in standings]
+    deleteTournamentPlayers()
+
+    (id1, id2, id3, id4, id5, id6) = (
+        registerPlayer("Bruno Walton", (tournament,)),
+        registerPlayer("Boots O'Neal", (tournament,)),
+        registerPlayer("Cathy Burton", (tournament,)),
+        registerPlayer("Diane Grant", (tournament,)),
+        registerPlayer("Lucy Himmel", (tournament,)),
+        registerPlayer("Reto Schweitzer", (tournament,))
+    )
+
     reportMatch(id1, id2, id1, tournament)
     reportMatch(id3, id4, id3, tournament)
     reportMatch(id5, id6, tournament=tournament)  # No winner: this is a draw
@@ -149,10 +154,11 @@ def testReportMatchesWithDraws(tournament):
 def testPairings(tournament):
     deleteMatches(tournament)
     deletePlayers()
-    registerPlayer("Twilight Sparkle")
-    registerPlayer("Fluttershy")
-    registerPlayer("Applejack")
-    registerPlayer("Pinkie Pie")
+    deleteTournamentPlayers()
+    registerPlayer("Twilight Sparkle", (tournament,))
+    registerPlayer("Fluttershy", (tournament,))
+    registerPlayer("Applejack", (tournament,))
+    registerPlayer("Pinkie Pie", (tournament,))
     standings = playerStandings(tournament)
     [id1, id2, id3, id4] = [row[0] for row in standings]
     reportMatch(id1, id2, id1, tournament)
@@ -174,9 +180,10 @@ def testOddNumberPairingsRaisesValueError(tournament):
 
     deleteMatches(tournament)
     deletePlayers()
-    registerPlayer("Twilight Sparkle")
-    registerPlayer("Fluttershy")
-    registerPlayer("Applejack")
+    deleteTournamentPlayers()
+    registerPlayer("Twilight Sparkle", (tournament,))
+    registerPlayer("Fluttershy", (tournament,))
+    registerPlayer("Applejack", (tournament,))
 
     def try_odd():
 
@@ -195,10 +202,11 @@ def testOddNumberPairingsRaisesValueError(tournament):
 def testReportDuplicateMatchesRaisesValueError(tournament):
     deleteMatches(tournament)
     deletePlayers()
-    registerPlayer("Bruno Walton")
-    registerPlayer("Boots O'Neal")
-    registerPlayer("Cathy Burton")
-    registerPlayer("Diane Grant")
+    deleteTournamentPlayers()
+    registerPlayer("Bruno Walton", (tournament,))
+    registerPlayer("Boots O'Neal", (tournament,))
+    registerPlayer("Cathy Burton", (tournament,))
+    registerPlayer("Diane Grant", (tournament,))
     standings = playerStandings(tournament)
     [id1, id2, id3, id4] = [row[0] for row in standings]
     # this is already tested in testReportMatches()
@@ -231,10 +239,11 @@ def testReportDuplicateMatchesRaisesValueError(tournament):
 def testReportSelfMatchesRaisesIntegrityError(tournament):
     deleteMatches(tournament)
     deletePlayers()
-    registerPlayer("Bruno Walton")
-    registerPlayer("Boots O'Neal")
-    registerPlayer("Cathy Burton")
-    registerPlayer("Diane Grant")
+    deleteTournamentPlayers()
+    registerPlayer("Bruno Walton", (tournament,))
+    registerPlayer("Boots O'Neal", (tournament,))
+    registerPlayer("Cathy Burton", (tournament,))
+    registerPlayer("Diane Grant", (tournament,))
     standings = playerStandings(tournament)
     [id1, id2, id3, id4] = [row[0] for row in standings]
     # this is already tested in testReportMatches()
@@ -266,10 +275,11 @@ def testReportSelfMatchesRaisesIntegrityError(tournament):
 def testReportMatchesBadWinnerRaisesIntegrityError(tournament):
     deleteMatches(tournament)
     deletePlayers()
-    registerPlayer("Bruno Walton")
-    registerPlayer("Boots O'Neal")
-    registerPlayer("Cathy Burton")
-    registerPlayer("Diane Grant")
+    deleteTournamentPlayers()
+    registerPlayer("Bruno Walton", (tournament,))
+    registerPlayer("Boots O'Neal", (tournament,))
+    registerPlayer("Cathy Burton", (tournament,))
+    registerPlayer("Diane Grant", (tournament,))
     standings = playerStandings(tournament)
     [id1, id2, id3, id4] = [row[0] for row in standings]
 
@@ -297,6 +307,7 @@ def testReportMatchesBadWinnerRaisesIntegrityError(tournament):
 
 
 def testRegisterPlayerToTournament(tournament):
+    deleteTournamentPlayers()
     id1, id2, id3 = registerPlayer('Bob'), registerPlayer('Alice'), registerPlayer('Spy')
     registerPlayerToTournament(id1, tournament)
     registerPlayerToTournament(id2, tournament)
@@ -309,6 +320,7 @@ def testRegisterPlayerToTournament(tournament):
 
 
 def testRegisterDuplicatePlayerToTournamentRaises(tournament):
+    deleteTournamentPlayers()
     id1 = registerPlayer('Bob')
     try:
         registerPlayerToTournament(id1, tournament)
