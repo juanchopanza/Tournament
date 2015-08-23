@@ -159,26 +159,18 @@ def playerStandings(tournament):
         tournament: id of the torunament whose standings are to be calculated
 
     Returns:
-      A list of tuples, each of which contains (id, name, wins, matches):
+      A list of tuples, each of which contains
+      (id, name, wins, draws, matches, points):
         id: the player's unique id (assigned by the database)
         name: the player's full name (as registered)
-        wins: the number of matches the player has won
-        matches: the number of matches the player has played
+        wins: Number of games won in this tournament
+        draws: Number of games drawn in this tournament
+        matches: the number of matches played by the player in this tournament
+        points: the number of points scored by the player has scored in this tournament
     """
 
-    # This is  not a view because I need to parametrize by tournament ID at
-    # runtime.
     standings_query = '''
-    SELECT players.id as id,
-       players.name as name,
-       (SELECT COUNT(*) FROM matches WHERE players.id = matches.winner_id) as wins,
-       (SELECT COUNT(*) FROM matches WHERE (players.id = matches.player_a_id or
-                                            players.id = matches.player_b_id) and
-                                            matches.winner_id IS NULL) as draws,
-       (SELECT COUNT(*) FROM matches WHERE players.id = matches.player_a_id or
-                                           players.id = matches.player_b_id) as matches
-    FROM players, tournaments where tournaments.id = %s
-    ORDER BY wins DESC, draws DESC;
+    SELECT id, name, wins, draws, matches, points FROM standings WHERE tournament_id = %s
     '''
     return _select(standings_query, (tournament,))
 
@@ -193,11 +185,10 @@ def reportMatch(player_a, player_b, winner=None, tournament=None):
       tournament: id of the torunament match is being played in.
 
     Raises:
-        ValueError if pairing already registered.
+        ValueError if players already played each other in this tournament.
         ValueError if either player isn't registered in the tournament.
         IntegrityError if player_a == player_b.
         IntegrityError if winner is not player_a or player_b or None.
-        IntegrityError if players already played.
     """
 
     def _checkPlayersRegistered():
@@ -212,13 +203,14 @@ def reportMatch(player_a, player_b, winner=None, tournament=None):
         '''Check that this match hasn't already been reported'''
         q = '''
         SELECT COUNT(*) FROM matches, tournaments
-        WHERE tournaments.id = %s
+        WHERE matches.tournament_id = tournaments.id AND tournaments.id = %s
               AND (matches.player_a_id = %s AND matches.player_b_id = %s)
               OR (matches.player_a_id = %s AND matches.player_b_id = %s);
         '''
         res = _select(q, (tournament, player_a, player_b, player_b, player_a))
         if res[0][0] > 0:
-            raise ValueError('Pairing %s, %s already played' % (player_a, player_b))
+            raise ValueError('Pairing %s, %s already played in tournament %s'
+                             % (player_a, player_b, tournament))
 
     _checkPlayersRegistered()
     _checkNewMatch()

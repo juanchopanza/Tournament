@@ -11,9 +11,10 @@ play in any number of tournaments.
 ## Exciting extra features:
 
 * No re-matches allowed.
-* Games with no winner allowed: players with same number of wins are ranked by
-  number of draws.
-* Multiple tournaments supported.
+* Games with no winner allowed: wins score 2 points, draws 1 point.
+  Players are ranked by number of points. Number of wins used as tie-breaker.
+* Multiple tournaments supported. Players can register to an arbitrary number
+  of tournaments.
 
 ## Requirements:
 

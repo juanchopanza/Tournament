@@ -64,19 +64,21 @@ def testRegisterCountDelete(tournament):
 def testStandingsBeforeMatches(tournament):
     deleteMatches(tournament)
     deletePlayers()
-    registerPlayer("Melpomene Murray")
-    registerPlayer("Randy Schwartz")
+    deleteTournamentPlayers()
+    registerPlayer("Melpomene Murray", (tournament,))
+    registerPlayer("Randy Schwartz", (tournament,))
     standings = playerStandings(tournament)
     if len(standings) < 2:
         raise ValueError("Players should appear in playerStandings even before "
                          "they have played any matches.")
     elif len(standings) > 2:
         raise ValueError("Only registered players should appear in standings.")
-    if len(standings[0]) != 5:
-        raise ValueError("Each playerStandings row should have four columns.")
-    [(id1, name1, wins1, draws1, matches1),
-     (id2, name2, wins2, draws2, matches2)] = standings
-    if [wins1, draws1, matches1, wins2, draws2, matches2] != [0]*6:
+    if len(standings[0]) != 6:
+        raise ValueError("Each playerStandings row should have six columns.")
+
+    [(id1, name1, wins1, draws1, matches1, points1),
+     (id2, name2, wins2, draws2, matches2, points2)] = standings
+    if [wins1, draws1, points1, matches1, wins2, draws2, points2, matches2] != [0]*8:
         raise ValueError(
             "Newly registered players should have no matches or wins.")
     if set([name1, name2]) != set(["Melpomene Murray", "Randy Schwartz"]):
@@ -94,12 +96,10 @@ def testReportMatches(tournament):
                           registerPlayer("Boots O'Neal", (tournament,)),
                           registerPlayer("Cathy Burton", (tournament,)),
                           registerPlayer("Diane Grant", (tournament,)))
-    #standings = playerStandings(tournament)
-    #[id1, id2, id3, id4] = [row[0] for row in standings]
     reportMatch(id1, id2, id1, tournament)
     reportMatch(id3, id4, id3, tournament)
     standings = playerStandings(tournament)
-    for (i, n, w, d, m) in standings:
+    for (i, n, w, d, m, p) in standings:
         if m != 1:
             raise ValueError("Each player should have one match recorded.")
         if d != 0:
@@ -132,17 +132,17 @@ def testReportMatchesWithDraws(tournament):
     reportMatch(id2, id3, tournament=tournament)  # No winner: this is a draw
     reportMatch(id2, id6, id2, tournament)
     standings = playerStandings(tournament)
-    # standings are sorted by wins, then draws
+    # standings are sorted by points, then by wins.
     # matches have been reported such that playerStandings()
     # should guarantee this ordering (no players have equal number of
     # both wins and draws)
     ref_standings = [
-        ('Cathy Burton', 1L, 2L, 3L),
-        ("Boots O'Neal", 1L, 1L, 3L),
-        ('Bruno Walton', 1L, 0L, 1L),
-        ('Reto Schweitzer', 0L, 2L, 3L),
-        ('Lucy Himmel', 0L, 1L, 1L),
-        ('Diane Grant', 0L, 0L, 1L)
+        ('Cathy Burton', 1L, 2L, 3L, 4L),
+        ("Boots O'Neal", 1L, 1L, 3L, 3L),
+        ('Bruno Walton', 1L, 0L, 1L, 2L),
+        ('Reto Schweitzer', 0L, 2L, 3L, 2L),
+        ('Lucy Himmel', 0L, 1L, 1L, 1L),
+        ('Diane Grant', 0L, 0L, 1L, 0L)
     ]
 
     for i, st in enumerate(standings):
@@ -332,11 +332,54 @@ def testRegisterDuplicatePlayerToTournamentRaises(tournament):
     raise ValueError("Register player to tournament twice doesn't raise ")
 
 
+def testMultipleTournaments():
+
+    deletePlayers()
+    deleteMatches()
+    deleteTournaments()
+    deleteTournamentPlayers()
+
+    # Register some tournaments
+    t0 = registerTournament('t0')
+    t1 = registerTournament('t1')
+
+    # Register some players
+    (id1, id2, id3, id4, id5, id6) = (
+        registerPlayer("Bruno Walton", (t0, t1)),
+        registerPlayer("Boots O'Neal", (t0, t1)),
+        registerPlayer("Cathy Burton", (t0, t1)),
+        registerPlayer("Diane Grant", (t0, t1)),
+        registerPlayer("Lucy Himmel", (t0,)),
+        registerPlayer("Reto Schweitzer", (t0,))
+    )
+
+
+    # report matches in tournament 0
+    print 'Reporting matches in tournament', t0
+    reportMatch(id1, id2, id1, t0)
+    reportMatch(id3, id4, id3, t0)
+    reportMatch(id5, id6, id5, t0)
+    reportMatch(id1, id4, None, t0)
+
+    # Get standings before matches have been played in
+    # 2nd tournament
+    standings = playerStandings(t0)
+
+    # report matches in tournament 1
+    print 'Reporting matches in tournament', t1
+    reportMatch(id1, id2, id1, t1)
+    reportMatch(id3, id4, None, t1)
+
+    # standings for t0 should not depend on t1
+    assert(standings == playerStandings(t0))
+    print "16. Players in multiple tournaments scored correctly"
+
+
 if __name__ == '__main__':
 
     deleteTournaments()
 
-    for i in xrange(1):
+    for i in xrange(3):
         tournament_name = 'test_tournament%d' % i
         tid = registerTournament(tournament_name)
         print 'tournament name', tournament_name, 'id', tid
@@ -355,4 +398,7 @@ if __name__ == '__main__':
         testOddNumberPairingsRaisesValueError(tid)
         testRegisterPlayerToTournament(tid)
         testRegisterDuplicatePlayerToTournamentRaises(tid)
-        print "Success!  All tests pass!"
+        print "Success!  All tests pass for tournament %d!" % tid, '\n'
+
+    testMultipleTournaments()
+    print "Success!  All tests pass!"
