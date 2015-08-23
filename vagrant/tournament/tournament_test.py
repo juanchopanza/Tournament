@@ -169,6 +169,28 @@ def testPairings(tournament):
     print "8. After one match, players with one win are paired."
 
 
+def testOddNumberPairingsRaisesValueError(tournament):
+
+    deleteMatches(tournament)
+    deletePlayers()
+    registerPlayer("Twilight Sparkle")
+    registerPlayer("Fluttershy")
+    registerPlayer("Applejack")
+
+    def try_odd():
+
+        try:
+            swissPairings(tournament)
+        except ValueError:
+            return True
+        return False
+
+    if try_odd():
+        print "13. playerStandings raises ValueError for odd number of players"
+    else:
+        raise ValueError('playerStandings does not raise for odd number of players')
+
+
 def testReportDuplicateMatchesRaisesValueError(tournament):
     deleteMatches(tournament)
     deletePlayers()
@@ -293,4 +315,5 @@ if __name__ == '__main__':
         testReportSelfMatchesRaisesIntegrityError(tid)
         testReportMatchesBadWinnerRaisesIntegrityError(tid)
         testReportMatchesWithDraws(tid)
+        testOddNumberPairingsRaisesValueError(tid)
         print "Success!  All tests pass!"

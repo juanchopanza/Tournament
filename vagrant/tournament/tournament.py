@@ -183,6 +183,9 @@ def swissPairings(tournament):
         name1: the first player's name
         id2: the second player's unique id
         name2: the second player's name
+
+    Raises:
+        ValueError if the number of players registered in tournamennt is odd.
     """
 
     # Standings lists players ordered by number of wins. We construct the
@@ -190,7 +193,6 @@ def swissPairings(tournament):
     # the closest number of wins by definition.
     # We use a grouper function to iterate over the standings list in groups
     # of two consecutive elements without overlap.
-    # TODO: extend for odd numbers
 
     def grouper(iterable, n, fillvalue=None):
         '''Collect data into fixed-length chunks or blocks
@@ -204,6 +206,10 @@ def swissPairings(tournament):
         return izip_longest(fillvalue=fillvalue, *args)
 
     standings = playerStandings(tournament)
+
+    if len(standings) % 2 != 0:
+        raise ValueError('Odd number of players not supported')
+
     pairings = [(a[0], a[1], b[0], b[1])
                 for a, b in grouper(standings, 2)]
 
