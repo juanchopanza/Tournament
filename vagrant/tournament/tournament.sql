@@ -36,7 +36,8 @@ CREATE TABLE tournament_players (
 );
 
 
--- redundant IDs needed to support draws.
+-- Store match information.
+-- Redundant IDs needed to support draws.
 -- winner_id is NULL if the match is a draw.
 CREATE TABLE matches (
     id SERIAL PRIMARY KEY,
@@ -51,7 +52,7 @@ CREATE TABLE matches (
 );
 
 
--- Table of all match results
+-- View of all match results
 -- Result score: 2, 1, 0 points for win, draw, loss respectively
 -- For CASE see http://www.postgresql.org/docs/9.3/static/plpgsql-control-structures.html
 CREATE VIEW results_table AS
@@ -59,13 +60,13 @@ SELECT players.id AS player_id,
        players.name AS player_name,
        tournament_players.tournament_id,
        matches.id AS match_id,
-CASE
-    WHEN matches.id IS NOT NULL AND players.id = matches.winner_id
-        THEN 2
-    WHEN matches.id IS NOT NULL AND matches.winner_id is NULL
-        THEN 1
-    ELSE 0
-END AS result
+       CASE
+           WHEN matches.id IS NOT NULL AND players.id = matches.winner_id
+               THEN 2
+           WHEN matches.id IS NOT NULL AND matches.winner_id is NULL
+               THEN 1
+           ELSE 0
+       END AS result
 FROM players INNER JOIN tournament_players ON players.id = tournament_players.player_id
      LEFT JOIN matches ON matches.tournament_id = tournament_players.tournament_id AND
                           (players.id = matches.player_a_id OR players.id = matches.player_b_id);

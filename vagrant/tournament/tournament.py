@@ -1,5 +1,11 @@
 #!/usr/bin/env python
-'''tournament.py -- implementation of a Swiss-system tournament'''
+'''tournament.py -- implementation of a Swiss-system tournament
+
+Allows multpile tournaments and draws.
+
+Author: Juan Palacios
+
+'''
 
 import psycopg2
 from psycopg2 import IntegrityError
@@ -23,9 +29,6 @@ def _query(query, vals=(), commit=False, post_exec=None):
 
     Returns:
         Result of the query
-
-    TODO:
-        Do we really neer to open and close each time?
     '''
     c, cur = connect()
     cur.execute(query, vals)
@@ -241,9 +244,10 @@ def swissPairings(tournament):
         ValueError if the number of players registered in tournamennt is odd.
     """
 
-    # Standings lists players ordered by number of wins. We construct the
+    # Standings lists players ordered by points, where 2 and 1 points
+    # are awarded for a win and draw respectively. We construct the
     # swiss pairings from consecutive entries in the standings list. These have
-    # the closest number of wins by definition.
+    # the closest number of points by definition.
     # We use a grouper function to iterate over the standings list in groups
     # of two consecutive elements without overlap.
 
