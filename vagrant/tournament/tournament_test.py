@@ -301,7 +301,7 @@ def testRegisterPlayerToTournament(tournament):
     registerPlayerToTournament(id1, tournament)
     registerPlayerToTournament(id2, tournament)
     registerPlayerToTournament(id3, tournament)
-    registered_players = set(a[0] for a in tournamentPlayers(tournament))
+    registered_players = set(tournamentPlayers(tournament))
     ids = set((id1, id2, id3))
     if registered_players != ids:
         raise ValueError('registerPlayerToTournament failed')

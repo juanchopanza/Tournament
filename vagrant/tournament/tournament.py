@@ -70,6 +70,20 @@ def deleteMatches(tournament=None):
         _delete('DELETE FROM matches')
 
 
+def deleteTournamentPlayers(tournament=None):
+    """Remove tournamend player registries from the database.
+
+    Args:
+        tournament: id of tournament whose matches player registry will be deleted.
+                    If None, all registries are deleted.
+    """
+    if tournament is not None:
+        _delete('DELETE FROM tournament_players WHERE tournament_id = %s',
+                (tournament,))
+    else:
+        _delete('DELETE FROM tournament_players')
+
+
 def deletePlayers():
     """Remove all the player records from the database."""
     _delete('DELETE FROM players')
@@ -105,9 +119,10 @@ def registerPlayer(name):
 
 
 def tournamentPlayers(tournament):
-    '''Return list of player IDs of players registered in tournament'''
-    return _select('SELECT player_id FROM tournament_players WHERE tournament_id = %s',
-                   (tournament,))
+    '''Return tuple of player IDs of players registered in tournament'''
+    res = _select('SELECT player_id FROM tournament_players WHERE tournament_id = %s',
+                  (tournament,))
+    return tuple(p[0] for p in res)
 
 
 def registerPlayerToTournament(player_id, tournament_id):
@@ -168,12 +183,23 @@ def reportMatch(player_a, player_b, winner=None, tournament=None):
       tournament: id of the torunament match is being played in.
 
     Raises:
-        IntegrityError if pairing already registered or player_a == player_b.
+        ValueError if pairing already registered.
+        ValueError if either player isn't registered in the tournament.
+        IntegrityError if player_a == player_b.
         IntegrityError if winner is not player_a or player_b or None.
         IntegrityError if players already played.
     """
 
-    def _checkPairing():
+    def _checkPlayersRegistered():
+        '''Check that both players are registered in the tournament'''
+        players = tournamentPlayers(tournament)
+        if player_a not in players or player_b not in players:
+            raise ValueError(
+                "At least one of players %s, %s isn't registered in tournament %s"
+                % (player_a, player_b, tournament))
+
+    def _checkNewMatch():
+        '''Check that this match hasn't already been reported'''
         q = '''
         SELECT COUNT(*) FROM matches, tournaments
         WHERE tournaments.id = %s
@@ -184,7 +210,8 @@ def reportMatch(player_a, player_b, winner=None, tournament=None):
         if res[0][0] > 0:
             raise ValueError('Pairing %s, %s already played' % (player_a, player_b))
 
-    _checkPairing()
+    _checkPlayersRegistered()
+    _checkNewMatch()
 
     return _insert('INSERT INTO matches(tournament_id, player_a_id, player_b_id, winner_id) VALUES (%s, %s, %s, %s) RETURNING id',
                    (tournament, player_a, player_b, winner))
