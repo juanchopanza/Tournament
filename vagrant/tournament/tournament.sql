@@ -3,6 +3,12 @@
 -- WARNING: This script re-creates the database from scratch each time.
 --          Previously stored data will be lost!
 
+-- Disconnect all existing database connections before dropping.
+-- See http://stackoverflow.com/questions/5408156/how-to-drop-a-postgresql-database-if-there-are-active-connections-to-it
+SELECT pg_terminate_backend(pg_stat_activity.pid)
+FROM pg_stat_activity
+WHERE pg_stat_activity.datname = 'tournament';
+
 DROP DATABASE IF EXISTS tournament;
 
 CREATE DATABASE tournament;

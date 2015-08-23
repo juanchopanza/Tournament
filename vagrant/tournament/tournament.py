@@ -8,9 +8,14 @@ from itertools import izip_longest
 DBNAME = 'tournament'
 
 
-def connect():
-    """Connect to the PostgreSQL database.  Returns a database connection."""
-    return psycopg2.connect("dbname=%s" % DBNAME)
+def connect(database_name=DBNAME):
+    """Connect to the PostgreSQL database.
+
+    Returns:
+        Tuple of database connection, cursor.
+    """
+    db = psycopg2.connect("dbname=%s" % database_name)
+    return db, db.cursor()
 
 
 def _query(query, vals=(), commit=False, post_exec=None):
@@ -22,8 +27,7 @@ def _query(query, vals=(), commit=False, post_exec=None):
     TODO:
         Do we really neer to open and close each time?
     '''
-    c = connect()
-    cur = c.cursor()
+    c, cur = connect()
     cur.execute(query, vals)
     if commit:
         c.commit()
