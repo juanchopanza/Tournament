@@ -2,6 +2,7 @@
 '''tournament.py -- implementation of a Swiss-system tournament'''
 
 import psycopg2
+from psycopg2 import IntegrityError
 from itertools import izip_longest
 
 DBNAME = 'tournament'
@@ -143,17 +144,12 @@ def reportMatch(player_a, player_b, winner=None, tournament=None):
       tournament: id of the torunament match is being played in.
 
     Raises:
-        ValueError if pairing already registered or player_a == player_b.
-        ValueError if winner is not player_a or player_b.
-        ValueError if players already played.
+        IntegrityError if pairing already registered or player_a == player_b.
+        IntegrityError if winner is not player_a or player_b or None.
+        IntegrityError if players already played.
     """
 
     def _checkPairing():
-        if player_a == player_b:
-            raise ValueError('Attempt to match player against self')
-        if winner is not None and winner not in (player_a, player_b):
-            raise ValueError('Winner is not one of the players')
-
         q = '''
         SELECT COUNT(*) FROM matches, tournaments
         WHERE tournaments.id = %s

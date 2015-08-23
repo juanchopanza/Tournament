@@ -24,4 +24,8 @@ CREATE TABLE matches (id SERIAL PRIMARY KEY,
                       tournament_id INT REFERENCES tournaments(id) ON DELETE CASCADE NOT NULL,
                       player_a_id INT REFERENCES players(id) ON DELETE CASCADE NOT NULL,
                       player_b_id INT REFERENCES players(id) ON DELETE CASCADE NOT NULL,
-                      winner_id INT REFERENCES players(id));
+                      winner_id INT REFERENCES players(id),
+                      CHECK (player_a_id <> player_b_id),
+                      CHECK (player_a_id = winner_id OR
+                             player_b_id = winner_id OR
+                             winner_id is NULL));

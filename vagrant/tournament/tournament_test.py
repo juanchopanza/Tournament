@@ -205,7 +205,7 @@ def testReportDuplicateMatchesRaisesValueError(tournament):
         print "9. Registering duplicate matches raises"
 
 
-def testReportSelfMatchesRaisesValueError(tournament):
+def testReportSelfMatchesRaisesIntegrityError(tournament):
     deleteMatches(tournament)
     deletePlayers()
     registerPlayer("Bruno Walton")
@@ -222,25 +222,25 @@ def testReportSelfMatchesRaisesValueError(tournament):
         ''' Attempt to report self matches
 
         Returns:
-            True if a == b raises ValueError, False otherwise
+            True if a == b raises IntegrityError, False otherwise
         '''
         try:
-            reportMatch(a, b, a)
-        except ValueError:
+            reportMatch(a, b, a, tournament)
+        except IntegrityError:
             return True
         return False
 
     res = (try_self_match(id1, id1)
            and try_self_match(id2, id2)
            and try_self_match(id3, id3)
-           and try_self_match(id4, id3))
+           and try_self_match(id4, id4))
 
     if not res:
-        raise ValueError("Registering self-match did not raise ValueError")
+        raise ValueError("Registering self-match did not raise IntegrityError")
     else:
         print "10. Registering match with self raises"
 
-def testReportMatchesBadWinnerRaisesValueError(tournament):
+def testReportMatchesBadWinnerRaisesIntegrityError(tournament):
     deleteMatches(tournament)
     deletePlayers()
     registerPlayer("Bruno Walton")
@@ -249,9 +249,6 @@ def testReportMatchesBadWinnerRaisesValueError(tournament):
     registerPlayer("Diane Grant")
     standings = playerStandings(tournament)
     [id1, id2, id3, id4] = [row[0] for row in standings]
-    # this is already tested in testReportMatches()
-    reportMatch(id1, id2, id1, tournament)
-    reportMatch(id3, id4, id3, tournament)
 
     def try_bad_winner_match(a, b, c):
         ''' Attempt to report match with invalid winner
@@ -260,8 +257,8 @@ def testReportMatchesBadWinnerRaisesValueError(tournament):
             True if c not in (a, b) raises ValueError, False otherwise
         '''
         try:
-            reportMatch(a, b, c)
-        except ValueError:
+            reportMatch(a, b, c, tournament)
+        except IntegrityError:
             return True
         return False
 
@@ -293,7 +290,7 @@ if __name__ == '__main__':
         testReportMatches(tid)
         testPairings(tid)
         testReportDuplicateMatchesRaisesValueError(tid)
-        testReportSelfMatchesRaisesValueError(tid)
-        testReportMatchesBadWinnerRaisesValueError(tid)
+        testReportSelfMatchesRaisesIntegrityError(tid)
+        testReportMatchesBadWinnerRaisesIntegrityError(tid)
         testReportMatchesWithDraws(tid)
         print "Success!  All tests pass!"
