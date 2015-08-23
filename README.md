@@ -66,3 +66,8 @@ Simply run the `tournament_test.py` script:
 If this fails to run due to unsuitable permissions, invoke it with `python`:
 
     python tournament_test.py
+
+### Examples
+
+See `vagrant/tournament/example.py` for a simple example of a set of players
+playing in two different tournaments.
