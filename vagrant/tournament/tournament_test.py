@@ -3,6 +3,7 @@
 # Test cases for tournament.py
 
 from tournament import *
+from itertools import izip
 
 def testDeleteMatches(tournament):
     deleteMatches(tournament)
@@ -295,11 +296,35 @@ def testReportMatchesBadWinnerRaisesIntegrityError(tournament):
         print "11. Registering match with bad winner raises"
 
 
+def testRegisterPlayerToTournament(tournament):
+    id1, id2, id3 = registerPlayer('Bob'), registerPlayer('Alice'), registerPlayer('Spy')
+    registerPlayerToTournament(id1, tournament)
+    registerPlayerToTournament(id2, tournament)
+    registerPlayerToTournament(id3, tournament)
+    registered_players = set(a[0] for a in tournamentPlayers(tournament))
+    ids = set((id1, id2, id3))
+    if registered_players != ids:
+        raise ValueError('registerPlayerToTournament failed')
+    print "14. Registering player to tournament works"
+
+
+def testRegisterDuplicatePlayerToTournamentRaises(tournament):
+    id1 = registerPlayer('Bob')
+    try:
+        registerPlayerToTournament(id1, tournament)
+        registerPlayerToTournament(id1, tournament)
+    except IntegrityError:
+        print "15. Registering player to tournament twice raises IntegrityError"
+        return
+
+    raise ValueError("Register player to tournament twice doesn't raise ")
+
+
 if __name__ == '__main__':
 
     deleteTournaments()
 
-    for i in xrange(5):
+    for i in xrange(1):
         tournament_name = 'test_tournament%d' % i
         tid = registerTournament(tournament_name)
         print 'tournament name', tournament_name, 'id', tid
@@ -316,4 +341,6 @@ if __name__ == '__main__':
         testReportMatchesBadWinnerRaisesIntegrityError(tid)
         testReportMatchesWithDraws(tid)
         testOddNumberPairingsRaisesValueError(tid)
+        testRegisterPlayerToTournament(tid)
+        testRegisterDuplicatePlayerToTournamentRaises(tid)
         print "Success!  All tests pass!"

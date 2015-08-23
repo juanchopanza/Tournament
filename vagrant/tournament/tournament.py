@@ -93,15 +93,35 @@ def registerTournament(name):
 
 
 def registerPlayer(name):
-    """Adds a player to the tournament database.
-
-    The database assigns a unique serial id number for the player.  (This
-    should be handled by your SQL database schema, not in your Python code.)
+    """Adds a player to the global tournament database.
 
     Args:
       name: the player's full name (need not be unique).
+
+    Returns:
+        ID of registered player
     """
     return _insert('INSERT INTO players(name) VALUES (%s) RETURNING id', (name,))
+
+
+def tournamentPlayers(tournament):
+    '''Return list of player IDs of players registered in tournament'''
+    return _select('SELECT player_id FROM tournament_players WHERE tournament_id = %s',
+                   (tournament,))
+
+
+def registerPlayerToTournament(player_id, tournament_id):
+    '''Register an existing player to a tournament
+
+    Note:
+        Registering a player more than once in the same tournament is an error.
+
+    Raises:
+        IntegrityError if registration failed.
+    '''
+    return _query('INSERT INTO tournament_players(player_id, tournament_id) VALUES (%s, %s)',
+                  (player_id, tournament_id),
+                  commit=True)
 
 
 def playerStandings(tournament):
