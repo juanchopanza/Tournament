@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 
-from tournament import *
+from tournament import (deletePlayers,
+                        deleteMatches,
+                        deleteTournaments,
+                        deleteTournamentPlayers,
+                        registerPlayer,
+                        registerTournament,
+                        reportMatch,
+                        playerStandings)
 
-
-def printStandings(standings):
-    for s in standings:
-        print s
+from pprint import pprint
 
 
 if __name__ == '__main__':
@@ -32,7 +36,7 @@ if __name__ == '__main__':
 
     print 'Registered players', id1, id2, id3, id4, id5, id6
     print 'Standings tournament', t0, 'before playing any matches'
-    printStandings(playerStandings(t0))
+    pprint(playerStandings(t0))
 
     # report matches in tournament 0
     print 'Reporting matches in tournament', t0
@@ -42,7 +46,7 @@ if __name__ == '__main__':
     reportMatch(id1, id4, None, t0)
 
     print 'Standings tournament', t0
-    printStandings(playerStandings(t0))
+    pprint(playerStandings(t0))
 
     # report matches in tournament 1
     print 'Reporting matches in tournament', t1
@@ -52,9 +56,9 @@ if __name__ == '__main__':
     standings = playerStandings(t0)
 
     print 'Standings tournament', t0
-    printStandings(standings)
+    pprint(standings)
 
     print 'Standings tournament', t1
-    printStandings(playerStandings(t1))
+    pprint(playerStandings(t1))
 
 
